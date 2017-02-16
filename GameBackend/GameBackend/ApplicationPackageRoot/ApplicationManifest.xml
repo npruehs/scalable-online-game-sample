@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <ApplicationManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ApplicationTypeName="GameBackendType" ApplicationTypeVersion="1.0.0" xmlns="http://schemas.microsoft.com/2011/01/fabric">
   <Parameters>
+    <Parameter Name="WebService_InstanceCount" DefaultValue="-1" />
     <Parameter Name="LobbyActorService_PartitionCount" DefaultValue="10" />
     <Parameter Name="LobbyActorService_MinReplicaSetSize" DefaultValue="3" />
     <Parameter Name="LobbyActorService_TargetReplicaSetSize" DefaultValue="3" />
@@ -9,9 +10,18 @@
        should match the Name and Version attributes of the ServiceManifest element defined in the 
        ServiceManifest.xml file. -->
   <ServiceManifestImport>
+    <ServiceManifestRef ServiceManifestName="WebServicePkg" ServiceManifestVersion="1.0.0" />
+    <ConfigOverrides />
+  </ServiceManifestImport>
+  <ServiceManifestImport>
     <ServiceManifestRef ServiceManifestName="LobbyActorPkg" ServiceManifestVersion="1.0.0" />
   </ServiceManifestImport>
   <DefaultServices>
+    <Service Name="WebService">
+      <StatelessService ServiceTypeName="WebServiceType" InstanceCount="[WebService_InstanceCount]">
+        <SingletonPartition />
+      </StatelessService>
+    </Service>
     <Service Name="LobbyActorService" GeneratedIdRef="30344b6b-d0b8-46eb-b43f-4a6fd8a8cee2|Persisted">
       <StatefulService ServiceTypeName="LobbyActorServiceType" TargetReplicaSetSize="[LobbyActorService_TargetReplicaSetSize]" MinReplicaSetSize="[LobbyActorService_MinReplicaSetSize]">
         <UniformInt64Partition PartitionCount="[LobbyActorService_PartitionCount]" LowKey="-9223372036854775808" HighKey="9223372036854775807" />
