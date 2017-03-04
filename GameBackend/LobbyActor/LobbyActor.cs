@@ -21,6 +21,8 @@ namespace LobbyActor
     [StatePersistence(StatePersistence.Persisted)]
     internal class LobbyActor : Actor, ILobbyActor
     {
+        private Microsoft.Azure.Documents.Client.DocumentClient client;
+
         /// <summary>
         /// Initializes a new instance of LobbyActor
         /// </summary>
@@ -38,6 +40,11 @@ namespace LobbyActor
         protected override Task OnActivateAsync()
         {
             ActorEventSource.Current.ActorMessage(this, "Actor activated.");
+
+            // Create the client.
+            this.client = new Microsoft.Azure.Documents.Client.DocumentClient(
+                new Uri("https://localhost:8081"),
+                "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==");
 
             // The StateManager is this actor's private state store.
             // Data stored in the StateManager will be replicated for high-availability for actors that use volatile or persisted state storage.
