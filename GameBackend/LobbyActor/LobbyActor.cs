@@ -92,25 +92,61 @@ namespace LobbyActor
             }
         }
 
-        /// <summary>
-        /// TODO: Replace with your own actor method.
-        /// </summary>
-        /// <returns></returns>
-        Task<int> ILobbyActor.GetCountAsync(CancellationToken cancellationToken)
+        public async Task<LoginResponse> LoginAsync(string playerId, CancellationToken cancellationToken)
         {
-            return this.StateManager.GetStateAsync<int>("count", cancellationToken);
-        }
+            PlayerDocument playerDocument = null;
 
-        /// <summary>
-        /// TODO: Replace with your own actor method.
-        /// </summary>
-        /// <param name="count"></param>
-        /// <returns></returns>
-        Task ILobbyActor.SetCountAsync(int count, CancellationToken cancellationToken)
-        {
-            // Requests are not guaranteed to be processed in order nor at most once.
-            // The update function here verifies that the incoming count is greater than the current count to preserve order.
-            return this.StateManager.AddOrUpdateStateAsync("count", count, (key, value) => count > value ? count : value, cancellationToken);
+            try
+            {
+                // Ensure player document exists.
+                var documentUri = Microsoft.Azure.Documents.Client.UriFactory.CreateDocumentUri
+                    (DatabaseName, CollectionName, playerId);
+                await this.client.ReadDocumentAsync(documentUri);
+
+                // Get player document.
+                var feedOptions =
+                    new Microsoft.Azure.Documents.Client.FeedOptions { MaxItemCount = 1 };
+
+                var collectionUri =
+                    Microsoft.Azure.Documents.Client.UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
+                var playerQuery =
+                    client.CreateDocumentQuery<PlayerDocument>(collectionUri, feedOptions)
+                    .Where(p => p.Id == playerId);
+
+                // Execute query.
+                foreach (PlayerDocument player in playerQuery)
+                {
+                    playerDocument = player;
+
+                    // Increase login count.
+                    ++player.LoginCount;
+                    await client.ReplaceDocumentAsync(documentUri, player);
+                }
+            }
+            catch (Microsoft.Azure.Documents.DocumentClientException e)
+            {
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // Create new player document.
+                    var collectionUri = Microsoft.Azure.Documents.Client.UriFactory.CreateDocumentCollectionUri
+                        (DatabaseName, CollectionName);
+                    playerDocument = new PlayerDocument { Id = playerId, LoginCount = 1 };
+                    await this.client.CreateDocumentAsync(collectionUri, playerDocument);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            // Return response.
+            var loginReponse = new LoginResponse
+            {
+                Id = playerDocument.Id,
+                LoginCount = playerDocument.LoginCount
+            };
+
+            return loginReponse;
         }
     }
 }

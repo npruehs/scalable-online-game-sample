@@ -19,8 +19,8 @@ namespace WebService.Controllers
         public async Task<string> Get(string id)
         {
             var lobbyActor = ActorProxy.Create<ILobbyActor>(new ActorId(0));
-            var count = await lobbyActor.GetCountAsync(new System.Threading.CancellationToken());
-            return count.ToString();
+            var response = await lobbyActor.LoginAsync(id, new System.Threading.CancellationToken());
+            return response.ToString();
         }
     }
 }
