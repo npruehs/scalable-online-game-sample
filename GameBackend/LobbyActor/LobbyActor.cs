@@ -21,6 +21,10 @@ namespace LobbyActor
     [StatePersistence(StatePersistence.Persisted)]
     internal class LobbyActor : Actor, ILobbyActor
     {
+        private const string DatabaseName = "GameDatabase";
+
+        private const string CollectionName = "Players";
+
         private Microsoft.Azure.Documents.Client.DocumentClient client;
 
         /// <summary>
@@ -47,8 +51,6 @@ namespace LobbyActor
                 "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==");
 
             // Verify the database exist.
-            const string DatabaseName = "GameDatabase";
-
             try
             {
                 var uri = Microsoft.Azure.Documents.Client.UriFactory.CreateDatabaseUri(DatabaseName);
@@ -69,8 +71,6 @@ namespace LobbyActor
             }
 
             // Verify player collection exists.
-            const string CollectionName = "Players";
-
             try
             {
                 var uri = Microsoft.Azure.Documents.Client.UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
