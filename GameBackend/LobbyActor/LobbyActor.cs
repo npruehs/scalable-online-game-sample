@@ -37,7 +37,7 @@ namespace LobbyActor
         /// This method is called whenever an actor is activated.
         /// An actor is activated the first time any of its methods are invoked.
         /// </summary>
-        protected override Task OnActivateAsync()
+        protected override async Task OnActivateAsync()
         {
             ActorEventSource.Current.ActorMessage(this, "Actor activated.");
 
@@ -46,12 +46,27 @@ namespace LobbyActor
                 new Uri("https://localhost:8081"),
                 "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==");
 
-            // The StateManager is this actor's private state store.
-            // Data stored in the StateManager will be replicated for high-availability for actors that use volatile or persisted state storage.
-            // Any serializable object can be saved in the StateManager.
-            // For more information, see https://aka.ms/servicefabricactorsstateserialization
+            // Verify the database exist.
+            const string DatabaseName = "GameDatabase";
 
-            return this.StateManager.TryAddStateAsync("count", 0);
+            try
+            {
+                var uri = Microsoft.Azure.Documents.Client.UriFactory.CreateDatabaseUri(DatabaseName);
+                await this.client.ReadDatabaseAsync(uri);
+            }
+            catch (Microsoft.Azure.Documents.DocumentClientException e)
+            {
+                // If the database does not exist, create a new database.
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    var database = new Microsoft.Azure.Documents.Database { Id = DatabaseName };
+                    await this.client.CreateDatabaseAsync(database);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         /// <summary>
