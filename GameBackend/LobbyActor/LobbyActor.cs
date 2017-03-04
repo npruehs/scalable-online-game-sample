@@ -67,6 +67,29 @@ namespace LobbyActor
                     throw;
                 }
             }
+
+            // Verify player collection exists.
+            const string CollectionName = "Players";
+
+            try
+            {
+                var uri = Microsoft.Azure.Documents.Client.UriFactory.CreateDocumentCollectionUri(DatabaseName, CollectionName);
+                await this.client.ReadDocumentCollectionAsync(uri);
+            }
+            catch (Microsoft.Azure.Documents.DocumentClientException e)
+            {
+                // If the document collection does not exist, create a new collection.
+                if (e.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    var databaseUri = Microsoft.Azure.Documents.Client.UriFactory.CreateDatabaseUri(DatabaseName);
+                    var collection = new Microsoft.Azure.Documents.DocumentCollection() { Id = CollectionName };
+                    await this.client.CreateDocumentCollectionAsync(databaseUri, collection);
+                }
+                else
+                {
+                    throw;
+                }
+            }
         }
 
         /// <summary>
