@@ -58,12 +58,38 @@ void SampleFpsTextRenderer::Update(DX::StepTimer const& timer)
 		// Update UI.
 		m_text = L"Sending request...";
 
+		// Get client ID from local settings storage.
+		Platform::String^ clientId;
+
+		Windows::Storage::ApplicationDataContainer^ localSettings =
+			Windows::Storage::ApplicationData::Current->LocalSettings;
+
+		if (localSettings->Values->HasKey("ClientId"))
+		{
+			// Lookup in local storage.
+			clientId = localSettings->Values->Lookup("ClientId")->ToString();
+		}
+		else
+		{
+			// Create new client id.
+			GUID guid;
+			CoCreateGuid(&guid);
+
+			OLECHAR* bstrGuid;
+			StringFromCLSID(guid, &bstrGuid);
+
+			clientId = ref new Platform::String(bstrGuid);
+
+			// Store in local storage.
+			localSettings->Values->Insert("ClientId", clientId);
+		}
+
 		// Send request.
 		httpClient =
 			ref new Windows::Web::Http::HttpClient();
 		Windows::Foundation::Uri^ uri =
-			ref new Windows::Foundation::Uri("http://localhost:8707/api/values");
-		
+			ref new Windows::Foundation::Uri("http://localhost:8557/api/login/" + clientId);
+
 		concurrency::create_task(httpClient->GetStringAsync(uri))
 		.then([=](Platform::String^ s)
 		{
