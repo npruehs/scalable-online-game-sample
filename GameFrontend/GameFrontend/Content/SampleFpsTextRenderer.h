@@ -17,6 +17,9 @@ namespace GameFrontend
 		void Render();
 
 	private:
+		Windows::Web::Http::HttpClient^ httpClient;
+		bool m_requestSent;
+
 		// Cached pointer to device resources.
 		std::shared_ptr<DX::DeviceResources> m_deviceResources;
 

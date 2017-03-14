@@ -46,10 +46,45 @@ SampleFpsTextRenderer::SampleFpsTextRenderer(const std::shared_ptr<DX::DeviceRes
 // Updates the text to be displayed.
 void SampleFpsTextRenderer::Update(DX::StepTimer const& timer)
 {
-	// Update display text.
-	uint32 fps = timer.GetFramesPerSecond();
+	//// Update display text.
+	//uint32 fps = timer.GetFramesPerSecond();
 
-	m_text = (fps > 0) ? std::to_wstring(fps) + L" FPS" : L" - FPS";
+	//m_text = (fps > 0) ? std::to_wstring(fps) + L" FPS" : L" - FPS";
+
+	if (!m_requestSent)
+	{
+		m_requestSent = true;
+
+		// Update UI.
+		m_text = L"Sending request...";
+
+		// Send request.
+		httpClient =
+			ref new Windows::Web::Http::HttpClient();
+		Windows::Foundation::Uri^ uri =
+			ref new Windows::Foundation::Uri("http://localhost:8707/api/values");
+		
+		concurrency::create_task(httpClient->GetStringAsync(uri))
+		.then([=](Platform::String^ s)
+		{
+			m_text = std::wstring(L"Response: ") + s->Data();
+		})
+		// Always catch network exceptions.
+		.then([this](concurrency::task<void> t)
+		{
+			try
+			{
+				// Check for errors.
+				t.get();
+			}
+			catch (Platform::Exception^ ex)
+			{
+				// Details in ex.Message and ex.HResult.
+				m_text = std::wstring(L"Error: ") + ex->Message->Data();
+			}
+		});
+	}
+
 
 	ComPtr<IDWriteTextLayout> textLayout;
 	DX::ThrowIfFailed(
